@@ -83,14 +83,11 @@ async function resolveQueryLanguages(codeqlCmd: string, config: configUtils.Conf
       }
     };
 
-    await exec.exec(
-      codeqlCmd, [
-        'resolve',
-        'queries',
-        ...config.additionalQueries,
-        '--format=bylanguage'
-      ],
-      options);
+    const codeqlCmdArgs = ['resolve', 'queries', ...config.additionalQueries, '--format=bylanguage'];
+    if (config.additionalQueryLibraries.length !== 0) {
+      codeqlCmdArgs.push("--search-path='"+config.additionalQueryLibraries.join(':')+"'");
+    }
+    await exec.exec(codeqlCmd, codeqlCmdArgs, options);
 
     const resolveQueriesOutputObject = JSON.parse(resolveQueriesOutput);
 
@@ -132,34 +129,38 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
 
     const sarifFile = path.join(sarifFolder, database + '.sarif');
 
-    if (config.extensionsPackDir !== "") {
-      await exec.exec(codeqlCmd, [
-        'database',
-        'analyze',
-        getMemoryFlag(),
-        path.join(databaseFolder, database),
-        '--format=sarif-latest',
-        '--output=' + sarifFile,
-        '--no-sarif-add-snippets',
-        '--search-path='+config.extensionsPackDir,
-        '--additional-packs='+rewriteFolder,
-        ...queries
-      ]);
+    const codeqlCmdArgs = [
+      'database',
+      'analyze',
+      getMemoryFlag(),
+      path.join(databaseFolder, database),
+      '--format=sarif-latest',
+      '--output=' + sarifFile,
+      '--no-sarif-add-snippets',
+      ...queries
+    ];
 
-    } else {
-      await exec.exec(codeqlCmd, [
-        'database',
-        'analyze',
-        getMemoryFlag(),
-        path.join(databaseFolder, database),
-        '--format=sarif-latest',
-        '--output=' + sarifFile,
-        '--no-sarif-add-snippets',
-        ...queries
-      ]);
+    const additionalPacks : string[] = [];
+    const searchPaths : string[] = [];
+    if (config.extensionsPackDir !== "") {
+      additionalPacks.push(rewriteFolder);
+      searchPaths.push(config.extensionsPackDir);
+    }
+
+    if (config.additionalQueryLibraries.length !== 0) {
+      searchPaths.concat(config.additionalQueryLibraries);
     }
     
+    if (additionalPacks.length !== 0) {
+      codeqlCmdArgs.push("--additional-packs='" + additionalPacks.join(':') + "'");
+    }
 
+    if (searchPaths.length !== 0) {
+      codeqlCmdArgs.push("--search-path='" + searchPaths.join(':') + "'");
+    }
+    
+    await exec.exec(codeqlCmd, codeqlCmdArgs);
+  
     core.debug('SARIF results for database ' + database + ' created at "' + sarifFile + '"');
     core.endGroup();
   }

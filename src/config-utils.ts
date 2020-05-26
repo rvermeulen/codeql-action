@@ -25,6 +25,7 @@ export class Config {
     public pathsIgnore: string[] = [];
     public paths: string[] = [];
     public extensionsPackDir = "";
+    public additionalQueryLibraries: string [] = []
 
     public addQuery(queryUses: string) {
         // The logic for parsing the string is based on what actions does for
@@ -92,6 +93,14 @@ export function getExtensionPackOutsideWorkspaceErrorMessage(extensionPackDir: s
 
 export function getExtensionPackDoesNotExistErrorMessage(extensionPackDir: string): string {
     return 'The extension pack "' + extensionPackDir + '" does not exist';
+}
+
+export function getLibraryPathOutsideWorkspaceErrorMessage(path: string): string {
+    return 'The query library path "' + path + '" is outside of the workspace';
+}
+
+export function getLibraryPathDoesNotExistErrorMessage(path: string): string {
+    return 'The query library path "' + path + '" does not exist';
 }
 
 function initConfig(): Config {
@@ -170,6 +179,27 @@ function initConfig(): Config {
         if (!fs.existsSync(config.extensionsPackDir)) {
             throw new Error(getExtensionPackDoesNotExistErrorMessage(config.extensionsPackDir));
         }
+    }
+
+    const additionalQueryLibraries = parsedYAML['query-libraries'];
+    if (additionalQueryLibraries && additionalQueryLibraries instanceof Array) {
+        additionalQueryLibraries.forEach(p => {
+            if (typeof p.uses === "string") {
+                const libraryPath = path.resolve(workspacePath, p.uses);
+
+                 // Error if the config file is now outside of the workspace
+                if (!(libraryPath + path.sep).startsWith(workspacePath + path.sep)) {
+                    throw new Error(getLibraryPathOutsideWorkspaceErrorMessage(libraryPath));
+                }
+
+                // Error if the file does not exist
+                if (!fs.existsSync(libraryPath)) {
+                    throw new Error(getLibraryPathDoesNotExistErrorMessage(libraryPath));
+                }
+
+                config.additionalQueryLibraries.push(libraryPath);
+            } 
+        });
     }
 
     return config;
