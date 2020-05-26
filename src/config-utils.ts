@@ -26,6 +26,7 @@ export class Config {
     public paths: string[] = [];
     public extensionsPackDir = "";
     public additionalQueryLibraries: string [] = []
+    public verbose = false;
 
     public addQuery(queryUses: string) {
         // The logic for parsing the string is based on what actions does for
@@ -200,6 +201,11 @@ function initConfig(): Config {
                 config.additionalQueryLibraries.push(libraryPath);
             } 
         });
+    }
+
+    const verbose = parsedYAML.verbose;
+    if (verbose && typeof verbose == "boolean") {
+        config.verbose = verbose;
     }
 
     return config;
