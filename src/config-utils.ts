@@ -24,6 +24,7 @@ export class Config {
     public externalQueries: ExternalQuery[] = [];
     public pathsIgnore: string[] = [];
     public paths: string[] = [];
+    public extensionsPackDir = "";
 
     public addQuery(queryUses: string) {
         // The logic for parsing the string is based on what actions does for
@@ -83,6 +84,14 @@ export function getConfigFileOutsideWorkspaceErrorMessage(configFile: string): s
 
 export function getConfigFileDoesNotExistErrorMessage(configFile: string): string {
     return 'The configuration file "' + configFile + '" does not exist';
+}
+
+export function getExtensionPackOutsideWorkspaceErrorMessage(extensionPackDir: string): string {
+    return 'The extension pack "' + extensionPackDir + '" is outside of the workspace';
+}
+
+export function getExtensionPackDoesNotExistErrorMessage(extensionPackDir: string): string {
+    return 'The extension pack "' + extensionPackDir + '" does not exist';
 }
 
 function initConfig(): Config {
@@ -145,6 +154,22 @@ function initConfig(): Config {
                 config.paths.push(path);
             }
         });
+    }
+
+    const extensionsPackDir = parsedYAML['extensions-pack-dir'];
+    if (extensionsPackDir && typeof extensionsPackDir === "string") {
+        // Treat the extensions pack directory as relative to the workspace
+        config.extensionsPackDir = path.resolve(workspacePath, extensionsPackDir);
+
+        // Error if the extensions pack directory is now outside of the workspace
+        if (!(config.extensionsPackDir  + path.sep).startsWith(workspacePath + path.sep)) {
+            throw new Error(getExtensionPackOutsideWorkspaceErrorMessage(config.extensionsPackDir));
+        }
+
+        // Error if the extensions pack directory does not exist
+        if (!fs.existsSync(config.extensionsPackDir)) {
+            throw new Error(getExtensionPackDoesNotExistErrorMessage(config.extensionsPackDir));
+        }
     }
 
     return config;

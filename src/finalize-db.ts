@@ -10,6 +10,7 @@ import * as externalQueries from "./external-queries";
 import * as sharedEnv from './shared-environment';
 import * as upload_lib from './upload-lib';
 import * as util from './util';
+import * as rewriteQueries from './rewrite-queries';
 
 function getMemoryFlag(): string {
   let memoryToUseMegaBytes: number;
@@ -117,6 +118,9 @@ async function resolveQueryLanguages(codeqlCmd: string, config: configUtils.Conf
 async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder: string, config: configUtils.Config) {
   const queriesPerLanguage = await resolveQueryLanguages(codeqlCmd, config);
 
+  const workspace = util.workspaceFolder();
+  const rewriteFolder = path.join(workspace, 'rewritten-default-queries');
+
   for (let database of fs.readdirSync(databaseFolder)) {
     core.startGroup('Analyzing ' + database);
 
@@ -128,16 +132,33 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
 
     const sarifFile = path.join(sarifFolder, database + '.sarif');
 
-    await exec.exec(codeqlCmd, [
-      'database',
-      'analyze',
-      getMemoryFlag(),
-      path.join(databaseFolder, database),
-      '--format=sarif-latest',
-      '--output=' + sarifFile,
-      '--no-sarif-add-snippets',
-      ...queries
-    ]);
+    if (config.extensionsPackDir !== "") {
+      await exec.exec(codeqlCmd, [
+        'database',
+        'analyze',
+        getMemoryFlag(),
+        path.join(databaseFolder, database),
+        '--format=sarif-latest',
+        '--output=' + sarifFile,
+        '--no-sarif-add-snippets',
+        '--search-path='+config.extensionsPackDir,
+        '--additional-packs='+rewriteFolder,
+        ...queries
+      ]);
+
+    } else {
+      await exec.exec(codeqlCmd, [
+        'database',
+        'analyze',
+        getMemoryFlag(),
+        path.join(databaseFolder, database),
+        '--format=sarif-latest',
+        '--output=' + sarifFile,
+        '--no-sarif-add-snippets',
+        ...queries
+      ]);
+    }
+    
 
     core.debug('SARIF results for database ' + database + ' created at "' + sarifFile + '"');
     core.endGroup();
@@ -164,6 +185,10 @@ async function run() {
     await finalizeDatabaseCreation(codeqlCmd, databaseFolder);
 
     await externalQueries.checkoutExternalQueries(config);
+
+    if (config.extensionsPackDir !== "") {
+      rewriteQueries.rewriteDefaultQueries(codeqlCmd);
+    }
 
     core.info('Analyzing database');
     await runQueries(codeqlCmd, databaseFolder, sarifFolder, config);
