@@ -184,8 +184,8 @@ function initConfig(): Config {
     const additionalQueryLibraries = parsedYAML['query-libraries'];
     if (additionalQueryLibraries && additionalQueryLibraries instanceof Array) {
         additionalQueryLibraries.forEach(p => {
-            if (typeof p.uses === "string") {
-                const libraryPath = path.resolve(workspacePath, p.uses);
+            if (typeof p === "string") {
+                const libraryPath = path.resolve(workspacePath, p);
 
                  // Error if the config file is now outside of the workspace
                 if (!(libraryPath + path.sep).startsWith(workspacePath + path.sep)) {
