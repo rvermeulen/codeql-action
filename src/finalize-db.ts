@@ -197,7 +197,7 @@ async function run() {
     await externalQueries.checkoutExternalQueries(config);
 
     if (config.queryExtensions.length !== 0) {
-      rewriteQueries.rewriteDefaultQueries(codeqlCmd, config);
+      await rewriteQueries.rewriteDefaultQueries(codeqlCmd, config);
     }
 
     core.info('Analyzing database');
