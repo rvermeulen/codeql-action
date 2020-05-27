@@ -182,11 +182,11 @@ function initConfig(): Config {
         }
     }
 
-    const additionalQueryLibraries = parsedYAML['query-libraries'];
-    if (additionalQueryLibraries && additionalQueryLibraries instanceof Array) {
-        additionalQueryLibraries.forEach(p => {
-            if (typeof p === "string") {
-                const libraryPath = path.resolve(workspacePath, p);
+    const queryLibraries = parsedYAML['query-libraries'];
+    if (queryLibraries && queryLibraries instanceof Array) {
+        queryLibraries.forEach(queryLibrary => {
+            if (typeof queryLibrary.uses === "string") {
+                const libraryPath = path.resolve(workspacePath, queryLibrary.uses);
 
                  // Error if the config file is now outside of the workspace
                 if (!(libraryPath + path.sep).startsWith(workspacePath + path.sep)) {
