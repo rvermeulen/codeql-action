@@ -188,12 +188,12 @@ function initConfig(): Config {
             if (typeof queryLibrary.uses === "string") {
                 const libraryPath = path.resolve(workspacePath, queryLibrary.uses);
 
-                 // Error if the config file is now outside of the workspace
+                 // Error if the library path is now outside of the workspace
                 if (!(libraryPath + path.sep).startsWith(workspacePath + path.sep)) {
                     throw new Error(getLibraryPathOutsideWorkspaceErrorMessage(libraryPath));
                 }
 
-                // Error if the file does not exist
+                // Error if the library path does not exist
                 if (!fs.existsSync(libraryPath)) {
                     throw new Error(getLibraryPathDoesNotExistErrorMessage(libraryPath));
                 }
