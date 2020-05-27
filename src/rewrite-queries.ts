@@ -42,15 +42,15 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
       core.info('Found QL pack "' + queryExtension.target + '" targeted by query extension "' + queryExtension.name + '"');
 
       const qlpackFolder = path.join(rewriteFolder, queryExtension.target);
-      core.debug('Creating rewrite folder "' + qlpackFolder + '"');
+      core.info('Creating rewrite folder "' + qlpackFolder + '"');
       io.mkdirP(qlpackFolder);
 
       const options = { recursive: true, force: false }
       const firstPath = qlpacksDictionary[queryExtension.target][0];
-      core.debug('Copying "' + firstPath + '" to rewrite folder "' + qlpackFolder + '"');
+      core.info('Copying "' + firstPath + '" to rewrite folder "' + qlpackFolder + '"');
       io.cp(firstPath, qlpackFolder, options);
 
-      core.info('Rewriting QL pack "' + queryExtension.target + '"');
+      core.info('Rewriting QL pack "' + queryExtension.target + '" by looking for query files in "' + qlpackFolder + '/**/*.ql"');
       const queryFileGlobber = await glob.create(qlpackFolder + '/**/*.ql');
       let rewrittenQueryCount = 0;
       for await (const file of queryFileGlobber.globGenerator()) {
@@ -69,6 +69,8 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
               }
             });
             rewrittenQueryCount++;
+          } else {
+            core.info('Query file "' + file + '" does not contain the trigger "' + queryExtension.trigger + '"');
           }
         });
       }
@@ -80,7 +82,7 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
         for await (const file of queryPackGlobber.globGenerator()) {
           const queryPack = yaml.safeLoad(fs.readFileSync(file, 'utf8'));
           if (queryPack.name !== queryExtension.target) {
-            core.debug('Skipping QL pack "' + file + '" not matching the target "' + queryExtension.target + '"');
+            core.info('Skipping QL pack "' + file + '" not matching the target "' + queryExtension.target + '"');
             continue;
           }
           let libraryPathDependencies = queryPack.libraryPathDependencies;
@@ -90,7 +92,7 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
             libraryPathDependencies = [queryExtensionPack.name];
           }
           queryPack.libraryPathDependencies = libraryPathDependencies;
-          core.debug('Adding library dependency "' + queryExtensionPack.name + '" to QL pack "' + file + '"');
+          core.info('Adding library dependency "' + queryExtensionPack.name + '" to QL pack "' + file + '"');
           fs.writeFile(file, yaml.safeDump(queryPack), (err) => {
             if (err) {
               throw Error("Failed to update qlpack at: '" + file + "', because of error: " + err);
