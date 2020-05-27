@@ -87,9 +87,11 @@ async function resolveQueryLanguages(codeqlCmd: string, config: configUtils.Conf
     if (config.additionalQueryLibraries.length !== 0) {
       codeqlCmdArgs.push("--search-path='"+config.additionalQueryLibraries.join(':')+"'");
     }
-    if (config.verbose) {
-      codeqlCmdArgs.push("-vv");
+
+    if (config.verbose > 0) {
+      codeqlCmdArgs.push("-" + "v".repeat(config.verbose));
     }
+    
     await exec.exec(codeqlCmd, codeqlCmdArgs, options);
 
     const resolveQueriesOutputObject = JSON.parse(resolveQueriesOutput);
@@ -162,8 +164,8 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
       codeqlCmdArgs.push("--search-path='" + searchPaths.join(':') + "'");
     }
 
-    if (config.verbose) {
-      codeqlCmdArgs.push("-vv");
+    if (config.verbose > 0) {
+      codeqlCmdArgs.push("-" + "v".repeat(config.verbose));
     }
     
     await exec.exec(codeqlCmd, codeqlCmdArgs);
