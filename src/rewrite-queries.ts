@@ -19,7 +19,7 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
   const rewriteFolder = path.join(workspace, 'rewritten-ql-packs');
   await io.mkdirP(rewriteFolder);
 
-  core.startGroup("CodeQL QL pack rewriting for query extensions")
+  core.startGroup("Applying query extensions");
   let qlpacks = '';
 
   core.info("Collecting QL packs");
