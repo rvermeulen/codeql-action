@@ -65,7 +65,7 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
           rewrittenQueryCount++;
         }
         else {
-          core.info('Query file "' + file + '" does not contain the trigger "' + queryExtension.trigger + '"');
+          core.debug('Query file "' + file + '" does not contain the trigger "' + queryExtension.trigger + '"');
         }
       }
       core.info('Rewritten ' + rewrittenQueryCount + ' queries.');
@@ -87,11 +87,9 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
           }
           queryPack.libraryPathDependencies = libraryPathDependencies;
           core.info('Adding library dependency "' + queryExtensionPack.name + '" to QL pack "' + file + '"');
-          fs.writeFile(file, yaml.safeDump(queryPack), (err) => {
-            if (err) {
-              throw Error("Failed to update qlpack at: '" + file + "', because of error: " + err);
-            }
-          });
+          const updatedQueryPack = yaml.safeDump(queryPack);
+          core.info('Updating QL package"' + file + '" to:\n' + updatedQueryPack + '\n');
+          fs.writeFileSync(file, updatedQueryPack);
         }
       }
     }
