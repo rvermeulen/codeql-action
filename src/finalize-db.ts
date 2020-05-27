@@ -85,13 +85,13 @@ async function resolveQueryLanguages(codeqlCmd: string, config: configUtils.Conf
 
     const codeqlCmdArgs = ['resolve', 'queries', ...config.additionalQueries, '--format=bylanguage'];
     if (config.additionalQueryLibraries.length !== 0) {
-      codeqlCmdArgs.push("--search-path='"+config.additionalQueryLibraries.join(':')+"'");
+      codeqlCmdArgs.push("--search-path="+config.additionalQueryLibraries.join(':'));
     }
 
     if (config.verbose > 0) {
       codeqlCmdArgs.push("-" + "v".repeat(config.verbose));
     }
-    
+
     await exec.exec(codeqlCmd, codeqlCmdArgs, options);
 
     const resolveQueriesOutputObject = JSON.parse(resolveQueriesOutput);
@@ -157,11 +157,11 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
     }
     
     if (additionalPacks.length !== 0) {
-      codeqlCmdArgs.push("--additional-packs='" + additionalPacks.join(':') + "'");
+      codeqlCmdArgs.push("--additional-packs=" + additionalPacks.join(':'));
     }
 
     if (searchPaths.length !== 0) {
-      codeqlCmdArgs.push("--search-path='" + searchPaths.join(':') + "'");
+      codeqlCmdArgs.push("--search-path=" + searchPaths.join(':'));
     }
 
     if (config.verbose > 0) {
