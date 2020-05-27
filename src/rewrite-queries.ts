@@ -52,8 +52,10 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
 
       core.info('Rewriting QL pack "' + queryExtension.target + '" by looking for query files in "' + qlpackFolder + '/**/*.ql"');
       const queryFileGlobber = await glob.create(qlpackFolder + '/**/*.ql');
+      const queryFiles = await queryFileGlobber.glob();
+      core.info('Found ' + queryFiles.length + ' query files');
       let rewrittenQueryCount = 0;
-      for await (const file of queryFileGlobber.globGenerator()) {
+      for await (const file of queryFiles) {
         fs.readFile(file, 'utf8', (err, query) => {
           if (err) {
             throw new Error('Unable to read the query "' + file + '", because of error' + err);
