@@ -43,12 +43,12 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
 
       const qlpackFolder = path.join(rewriteFolder, queryExtension.target);
       core.info('Creating rewrite folder "' + qlpackFolder + '"');
-      io.mkdirP(qlpackFolder);
+      await io.mkdirP(qlpackFolder);
 
       const options = { recursive: true, force: false }
       const firstPath = qlpacksDictionary[queryExtension.target][0];
       core.info('Copying "' + firstPath + '" to rewrite folder "' + qlpackFolder + '"');
-      io.cp(firstPath, qlpackFolder, options);
+      await io.cp(firstPath, qlpackFolder, options);
 
       core.info('Rewriting QL pack "' + queryExtension.target + '" by looking for query files in "' + qlpackFolder + '/**/*.ql"');
       const queryFileGlobber = await glob.create(qlpackFolder + '/**/*.ql');
