@@ -121,7 +121,7 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
   const queriesPerLanguage = await resolveQueryLanguages(codeqlCmd, config);
 
   const workspace = util.workspaceFolder();
-  const rewriteFolder = path.join(workspace, 'rewritten-default-queries');
+  const rewriteFolder = path.join(workspace, 'rewritten-ql-packs');
 
   for (let database of fs.readdirSync(databaseFolder)) {
     core.startGroup('Analyzing ' + database);
@@ -147,9 +147,9 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
 
     const additionalPacks : string[] = [];
     let searchPaths : string[] = [];
-    if (config.extensionsPackDir !== "") {
+    if (config.queryExtensions.length !== 0) {
       additionalPacks.push(rewriteFolder);
-      searchPaths.push(config.extensionsPackDir);
+      searchPaths = searchPaths.concat(config.queryExtensions.map(queryExtension => queryExtension.uses));
     }
 
     if (config.additionalQueryLibraries.length !== 0) {
@@ -196,8 +196,8 @@ async function run() {
 
     await externalQueries.checkoutExternalQueries(config);
 
-    if (config.extensionsPackDir !== "") {
-      rewriteQueries.rewriteDefaultQueries(codeqlCmd);
+    if (config.queryExtensions.length !== 0) {
+      rewriteQueries.rewriteDefaultQueries(codeqlCmd, config);
     }
 
     core.info('Analyzing database');

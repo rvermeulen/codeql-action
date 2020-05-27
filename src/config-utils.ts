@@ -17,6 +17,14 @@ export class ExternalQuery {
     }
 }
 
+export interface QueryExtension {
+    name: string;
+    target: string;
+    uses: string;
+    trigger: string;
+    imports: string[];
+}
+
 export class Config {
     public name = "";
     public disableDefaultQueries = false;
@@ -24,8 +32,8 @@ export class Config {
     public externalQueries: ExternalQuery[] = [];
     public pathsIgnore: string[] = [];
     public paths: string[] = [];
-    public extensionsPackDir = "";
-    public additionalQueryLibraries: string [] = []
+    public additionalQueryLibraries: string [] = [];
+    public queryExtensions: QueryExtension [] = [];
     public verbose = 0;
 
     public addQuery(queryUses: string) {
@@ -95,6 +103,11 @@ export function getExtensionPackOutsideWorkspaceErrorMessage(extensionPackDir: s
 export function getExtensionPackDoesNotExistErrorMessage(extensionPackDir: string): string {
     return 'The extension pack "' + extensionPackDir + '" does not exist';
 }
+
+export function getExtensionPackMissesQLPackErrorMessage(extensionPackDir: string): string {
+    return 'The extension pack "' + extensionPackDir + '" does not contain a "qlpack.yml"';
+}
+
 
 export function getLibraryPathOutsideWorkspaceErrorMessage(path: string): string {
     return 'The query library path "' + path + '" is outside of the workspace';
@@ -166,22 +179,6 @@ function initConfig(): Config {
         });
     }
 
-    const extensionsPackDir = parsedYAML['extensions-pack-dir'];
-    if (extensionsPackDir && typeof extensionsPackDir === "string") {
-        // Treat the extensions pack directory as relative to the workspace
-        config.extensionsPackDir = path.resolve(workspacePath, extensionsPackDir);
-
-        // Error if the extensions pack directory is now outside of the workspace
-        if (!(config.extensionsPackDir  + path.sep).startsWith(workspacePath + path.sep)) {
-            throw new Error(getExtensionPackOutsideWorkspaceErrorMessage(config.extensionsPackDir));
-        }
-
-        // Error if the extensions pack directory does not exist
-        if (!fs.existsSync(config.extensionsPackDir)) {
-            throw new Error(getExtensionPackDoesNotExistErrorMessage(config.extensionsPackDir));
-        }
-    }
-
     const queryLibraries = parsedYAML['query-libraries'];
     if (queryLibraries && queryLibraries instanceof Array) {
         queryLibraries.forEach(queryLibrary => {
@@ -200,6 +197,29 @@ function initConfig(): Config {
 
                 config.additionalQueryLibraries.push(libraryPath);
             } 
+        });
+    }
+
+    const queryExtensions = parsedYAML['query-extensions'];
+    if (queryExtensions && queryExtensions instanceof Array) {
+        queryExtensions.forEach(queryExtension => {
+            const queryExtensionPath = path.resolve(workspacePath, queryExtension.uses);
+             // Error if the extensions pack directory is now outside of the workspace
+            if (!(queryExtensionPath  + path.sep).startsWith(workspacePath + path.sep)) {
+                throw new Error(getExtensionPackOutsideWorkspaceErrorMessage(queryExtensionPath));
+            }
+
+            // Error if the extensions pack directory does not exist
+            if (!fs.existsSync(queryExtensionPath)) {
+                throw new Error(getExtensionPackDoesNotExistErrorMessage(queryExtensionPath));
+            }
+
+            if (!fs.existsSync(path.join(queryExtensionPath, "qlpack.yml"))) {
+                throw new Error(getExtensionPackMissesQLPackErrorMessage(queryExtensionPath))
+            }
+            queryExtension.uses = queryExtensionPath;
+
+            config.queryExtensions.push(queryExtension);
         });
     }
 
