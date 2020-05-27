@@ -146,14 +146,14 @@ async function runQueries(codeqlCmd: string, databaseFolder: string, sarifFolder
     ];
 
     const additionalPacks : string[] = [];
-    const searchPaths : string[] = [];
+    let searchPaths : string[] = [];
     if (config.extensionsPackDir !== "") {
       additionalPacks.push(rewriteFolder);
       searchPaths.push(config.extensionsPackDir);
     }
 
     if (config.additionalQueryLibraries.length !== 0) {
-      searchPaths.concat(config.additionalQueryLibraries);
+      searchPaths = searchPaths.concat(config.additionalQueryLibraries);
     }
     
     if (additionalPacks.length !== 0) {
