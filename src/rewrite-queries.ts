@@ -55,26 +55,18 @@ export async function rewriteDefaultQueries(codeqlCmd: string, config: configUti
       const queryFiles = await queryFileGlobber.glob();
       core.info('Found ' + queryFiles.length + ' query files');
       let rewrittenQueryCount = 0;
-      for await (const file of queryFiles) {
-        fs.readFile(file, 'utf8', (err, query) => {
-          if (err) {
-            throw new Error('Unable to read the query "' + file + '", because of error' + err);
-          }
-
-          if (query.search(queryExtension.trigger) !== -1) {
-            core.info('Rewriting query "' + file + '"');
-            const rewrittenImports = [queryExtension.trigger].concat(queryExtension.imports);
-            const rewrittenQuery = query.replace(queryExtension.trigger, rewrittenImports.join("\n"));
-            fs.writeFile(file, rewrittenQuery, (err) => {
-              if (err) {
-                throw new Error('Unable to write the query "' + file + '", because of error:' + err);
-              }
-            });
-            rewrittenQueryCount++;
-          } else {
-            core.info('Query file "' + file + '" does not contain the trigger "' + queryExtension.trigger + '"');
-          }
-        });
+      for (const file of queryFiles) {
+        const query = fs.readFileSync(file, 'utf8')
+        if (query.search(queryExtension.trigger) !== -1) {
+          core.info('Rewriting query "' + file + '"');
+          const rewrittenImports = [queryExtension.trigger].concat(queryExtension.imports);
+          const rewrittenQuery = query.replace(queryExtension.trigger, rewrittenImports.join("\n"));
+          fs.writeFileSync(file, rewrittenQuery);
+          rewrittenQueryCount++;
+        }
+        else {
+          core.info('Query file "' + file + '" does not contain the trigger "' + queryExtension.trigger + '"');
+        }
       }
       core.info('Rewritten ' + rewrittenQueryCount + ' queries.');
       if (rewrittenQueryCount !== 0) {
